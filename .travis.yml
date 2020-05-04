@@ -1,0 +1,36 @@
+language: shell
+
+services: docker
+
+env:
+  - DOCKER_COMPOSE_VERSION=1.23.2
+
+before_install:
+  - docker -v && docker-compose -v
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+  - chmod +x ./kubectl
+  - sudo mv ./kubectl /usr/local/bin/kubectl
+  - docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+  - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  - unzip awscliv2.zip
+  - sudo ./aws/install
+  - echo "[default]" >> ~/.aws/credentials
+  - echo "aws_access_key_id = ${AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
+  - echo "aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
+  - echo "[default]" >> ~/.aws/config
+  - echo "region = eu-north-1" >> ~/.aws/config
+  - aws eks --region eu-north-1 update-kubeconfig --name bjork-udagram-cluster
+  - kubectl get svc
+
+install:
+  - docker-compose -f lesson-6-Independent-Releases-and-Deployment/exercise/udacity-c3-deployment/docker/docker-compose-build.yaml build --parallel
+
+after_script:
+  - docker push patrikb/reverseproxy:latest
+  - docker push patrikb/udacity-frontend:latest
+  - docker push patrikb/udacity-restapi-user:latest
+  - docker push patrikb/udacity-restapi-feed:latest

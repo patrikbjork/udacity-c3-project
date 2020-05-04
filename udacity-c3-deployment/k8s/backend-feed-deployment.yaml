@@ -15,7 +15,7 @@ spec:
         service: backend-feed
     spec:
       containers:
-        - image: patrikb/udacity-restapi-feed
+        - image: patrikb/udacity-restapi-feed:latest
           name: backend-feed
           imagePullPolicy: Always
           resources:
